@@ -1,0 +1,8 @@
+pandas
+matplotlib
+seaborn
+scikit-learn
+pytest
+black
+flake8
+jupyter

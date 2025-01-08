@@ -1,0 +1,63 @@
+image: docker:latest
+
+services:
+  - docker:dind
+
+
+stages:
+  - build
+  - package
+  - lint
+  - test
+  - pages
+  - deploy
+
+
+variables:
+  DOCKER_DRIVER: overlay2
+
+
+build:
+  stage: build
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin registry.gitlab.com
+    - docker build --no-cache --pull -t registry.gitlab.com/mlops_sem_3/hw_1:latest .
+    - docker push registry.gitlab.com/mlops_sem_3/hw_1:latest
+
+
+
+lint:
+  stage: lint
+  script:
+    - docker run -v $CI_PROJECT_DIR:/app registry.gitlab.com/mlops_sem_3/hw_1:latest black .
+    - docker run -v $CI_PROJECT_DIR:/app registry.gitlab.com/mlops_sem_3/hw_1:latest echo "[flake8]" > .flake8
+    - docker run -v $CI_PROJECT_DIR:/app registry.gitlab.com/mlops_sem_3/hw_1:latest echo "max-line-length = 300" >> .flake8
+    - docker run -v $CI_PROJECT_DIR:/app registry.gitlab.com/mlops_sem_3/hw_1:latest echo "extend-ignore = E203, E266, E501, W503, W291, W293" >> .flake8
+    - docker run -v $CI_PROJECT_DIR:/app registry.gitlab.com/mlops_sem_3/hw_1:latest flake8 .
+    - docker run -v $CI_PROJECT_DIR:/app registry.gitlab.com/mlops_sem_3/hw_1:latest black --check .
+
+
+test:
+  stage: test
+  script:
+    - docker run -v $CI_PROJECT_DIR:/app registry.gitlab.com/mlops_sem_3/hw_1:latest pytest /app/test_mlops_hw1.py
+
+
+pages:
+  stage: pages
+  script:
+    - docker run -v $CI_PROJECT_DIR:/app registry.gitlab.com/mlops_sem_3/hw_1:latest jupyter nbconvert --to html mlops_hw1.ipynb
+    - docker run -v $CI_PROJECT_DIR:/app registry.gitlab.com/mlops_sem_3/hw_1:latest mkdir -p public
+    - docker run -v $CI_PROJECT_DIR:/app registry.gitlab.com/mlops_sem_3/hw_1:latest mv mlops_hw1.html public/
+
+
+  artifacts:
+    paths:
+      - public
+
+
+deploy:
+  stage: deploy
+  script:
+    - docker pull registry.gitlab.com/mlops_sem_3/hw_1:latest
+    - docker run -d -p 80:80 registry.gitlab.com/mlops_sem_3/hw_1:latest
