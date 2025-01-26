@@ -21,7 +21,7 @@ build:
   script:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin registry.gitlab.com
     - docker build --no-cache --pull -t registry.gitlab.com/kaktys36/mlops_sem_3_hw_1:latest .
-    - docker push registry.gitlab.com/kaktys36/mlops_sem_3_hw_1:latest .
+    - docker push registry.gitlab.com/kaktys36/mlops_sem_3_hw_1:latest
 
 
 
